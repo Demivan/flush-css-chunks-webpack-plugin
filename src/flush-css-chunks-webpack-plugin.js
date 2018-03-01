@@ -1,8 +1,14 @@
 const { ConcatSource } = require('webpack-sources');
 const { matchObject } = require('webpack/lib/ModuleFilenameHelpers');
 
-function isInitial(chunk) {
-  return chunk.isInitial() || chunk.parents.length === 0;
+function isInitialOrHasNoParents(chunk) {
+  let parentCount = 0;
+
+  chunk.groupsIterable.forEach((chunkGroup) => {
+    parentCount += chunkGroup.getNumberOfParents();
+  });
+
+  return chunk.isOnlyInitial() || parentCount === 0;
 }
 
 function generateAssetMapping(path, assets) {
@@ -65,7 +71,7 @@ class FlushCSSChunks {
         );
 
         chunks.forEach((chunk) => {
-          if (this.options.entryOnly && !isInitial(chunk)) {
+          if (this.options.entryOnly && !isInitialOrHasNoParents(chunk)) {
             return;
           }
 
